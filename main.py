@@ -11,38 +11,20 @@ from typing import List
 from models import Expenses, Message, ExpensesText
 from database import SessionLocal, engine, Base
 from sqlalchemy.orm import Session
+
 from tools.date_now import tratar_data
+from prompt_template import pt_date, pt_expenses
+from tools.categorys import listar_categorias, montar_prompt as montar_prompt_categorys
 
 # from openai import OpenAI
 load_dotenv()
 
 # Carregar variáveis de ambiente
-langOpenAI = OpenAI(api_key=os.getenv("OPENAI_API_KEY"), temperature=0)
-
-# Inicializa o agente com a tool tratar_data_tool
-
-
-@tool("tratar_data")
-def tratar_data_tool(data_str: str = None) -> str:
-    """
-    Trata datas: se não houver data, retorna a data atual.
-    Se a data vier incompleta (apenas mês e dia), completa com o ano atual.
-    """
-    return tratar_data(data_str)
+langOpenAI = OpenAI(api_key=os.getenv("OPENAI_API_KEY"),
+                    temperature=0)
 
 
-tools = [tratar_data_tool]
-agent = initialize_agent(
-    tools=tools,
-    llm=langOpenAI,
-    agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-    verbose=True
-)
-
-# Criar tabelas
-Base.metadata.create_all(bind=engine)
-
-app = FastAPI(title="Agente Financeiro - API")
+print(f"Modelo do LangOpenAI: {langOpenAI.model_name}")
 
 # Dependência do DB
 
@@ -55,21 +37,48 @@ def get_db():
         db.close()
 
 
+@tool("tratar_data")
+def tratar_data_tool(data_str: str = None) -> str:
+    """
+    Trata datas: se não houver data, retorna a data atual.
+    Se a data vier incompleta (apenas mês e dia), completa com o ano atual.
+    """
+    return tratar_data(data_str)
+
+
+@tool("tratar_categorias")
+def tratar_categorias_tool(input: str) -> str:
+    """
+    Categorizar: retorna a lista de categorias válidas e suas subcategorias.
+    Deve usar apenas o nome da categoria e apenas UMA das subcategoria que melhor correspondem ao termo.
+    """
+    db = SessionLocal()
+    categorias = listar_categorias(db)
+    db.close()
+    return montar_prompt_categorys(categorias)
+
+
+tools = [tratar_data_tool, tratar_categorias_tool]
+agent = initialize_agent(
+    tools=tools,
+    llm=langOpenAI,
+    agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+    verbose=True
+)
+
+# Criar tabelas
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(title="Agente Financeiro - API")
+
+
 # Função de IA
 
 def analisar_despesa_texto(param_text: str):
 
     date_now = datetime.now().strftime("%Y-%m-%d")
 
-    prompt_date = PromptTemplate.from_template(
-        '''
-    Considere que a data de hoje é {date}.
-    Extraia e converta qualquer expressão de tempo do texto abaixo para o formato YYYY-MM-DD.
-    Se não houver expressão de tempo, retorne a data atual.
-    Texto: "{param_text}"
-    Responda apenas com a data.
-    '''
-    )
+    prompt_date = PromptTemplate.from_template(pt_date)
 
     print("Prompt data:", prompt_date)
 
@@ -78,25 +87,7 @@ def analisar_despesa_texto(param_text: str):
 
     print("Data extraída:", the_date)
 
-    prompt_template = PromptTemplate.from_template(
-        '''
-        Extraia as seguintes informações do texto abaixo:
-        - description (descrição da despesa)
-        - value (número com ponto decimal)
-        - category
-        - date (YYYY-MM-DD; use esta data {date})
-        texto: "{param_record}"
-        Responda estritamente em um objeto JSON, por exemplo:
-        [
-        {{
-            "description": "Compra no supermercado",
-            "value": 150.75,
-            "category": "Alimentação",
-            "event_date": "2024-09-05"
-        }}
-        ]
-        '''
-    )
+    prompt_template = PromptTemplate.from_template(pt_expenses)
 
     prompt = prompt_template.format(param_record=param_text, date=the_date)
     print("Prompt enviado à IA:", prompt)
@@ -122,6 +113,7 @@ def adicionar_despesa_texto(d: ExpensesText, userId: int, db: Session = Depends(
             description=item["description"],
             money=float(item["value"]),
             category=item["category"],
+            subcategory=item["subcategory"],
             event_date=datetime.fromisoformat(item["event_date"]),
             userId=userId
         )
