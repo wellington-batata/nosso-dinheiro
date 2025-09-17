@@ -1,14 +1,24 @@
+from pydantic import BaseModel
 from sqlalchemy import Column, Integer, String, Float, DateTime
 from datetime import datetime
 from database import Base
 
 
-class Despesa(Base):
-    __tablename__ = "despesas"
+class Expenses(Base):
+    __tablename__ = "Expenses"
 
     id = Column(Integer, primary_key=True, index=True)
     userId = Column(Integer, index=True)
-    descricao = Column(String, index=False)
-    valor = Column(Float)
-    categoria = Column(String, index=True)
-    data = Column(DateTime, default=datetime.today())
+    description = Column(String, index=False)
+    money = Column(Float)
+    category = Column(String, index=True)
+    event_date = Column(DateTime, default=datetime.today())
+
+
+class ExpensesText(BaseModel):
+    texto: str
+
+
+class Message(BaseModel):
+    message: str
+    success: bool
