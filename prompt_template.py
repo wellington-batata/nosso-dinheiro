@@ -10,7 +10,8 @@ pt_expenses = '''
 Extraia as seguintes informações do texto abaixo:
 - description (descrição da despesa)
 - value (número com ponto decimal)
-- category
+- category (uma categoria válida para a categoria)
+- subcategory (uma subcategoria válida para a categoria)
 - date (YYYY-MM-DD; use esta data {date})
 texto: "{param_record}"
 Responda estritamente em um objeto JSON, por exemplo:
@@ -19,6 +20,7 @@ Responda estritamente em um objeto JSON, por exemplo:
     "description": "Compra no supermercado",
     "value": 150.75,
     "category": "Alimentação",
+    "subcategory": "Supermercado",
     "event_date": "2024-09-05"
 }}
 ]
