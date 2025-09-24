@@ -22,6 +22,7 @@ class Transactions(Base):
 class Categorys(Base):
     __tablename__ = 'Categorys'
     id = Column(Integer, primary_key=True, autoincrement=True)
+    type = Column(String(50), unique=False, nullable=True)  # credit ou debit
     category = Column(String(100), unique=True, nullable=False)
     # Armazena lista JSON de subcategorias
     subcategorys = Column(JSONB, nullable=True)

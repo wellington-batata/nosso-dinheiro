@@ -38,6 +38,10 @@ def get_db():
         db.close()
 
 
+# Criar tabelas
+Base.metadata.create_all(bind=engine)
+
+
 @tool("tratar_data")
 def tratar_data_tool(data_str: str = None) -> str:
     """
@@ -50,8 +54,9 @@ def tratar_data_tool(data_str: str = None) -> str:
 @tool("tratar_categorias")
 def tratar_categorias_tool(input: str) -> str:
     """
-    Categorizar: retorna a lista de categorias válidas e suas subcategorias.
-    Deve usar apenas o nome da categoria e apenas UMA das subcategoria que melhor correspondem ao termo.
+    Categorizar: retorna a lista de categorias válidas e suas subcategorias e tipo de transação débito, crédito, etc...
+    Deve usar apenas o nome da categoria, o tipo e apenas UMA das subcategoria 
+    que melhor correspondem ao termo.
     """
     db = SessionLocal()
     categorias = listar_categorias(db)
@@ -67,8 +72,6 @@ agent = initialize_agent(
     verbose=True
 )
 
-# Criar tabelas
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Agente Financeiro - API")
 
@@ -104,6 +107,11 @@ def analisar_despesa_texto(param_text: str):
 
 @app.post("/Transactions", response_model=Message)
 def adicionar_despesa_texto(d: TransactionText, userId: int, db: Session = Depends(get_db)):
+    if len(d.texto) < 10:
+        return {"message": "Texto muito curto", "success": False}
+    if len(d.texto) > 100:
+        return {"message": "Texto muito longo", "success": False}
+
     dados = analisar_despesa_texto(d.texto)
     if not dados or not isinstance(dados, list) or len(dados) == 0:
         return {"message": "Erro ao processar texto", "id": -1}
@@ -116,9 +124,13 @@ def adicionar_despesa_texto(d: TransactionText, userId: int, db: Session = Depen
             category=item["category"],
             subcategory=item["subcategory"],
             event_date=datetime.fromisoformat(item["event_date"]),
-            userId=userId
+            userId=userId,
+            type=item["type"]
         )
-        novas_despesas.append(nova_despesa)
+        if item["value"] > 0:
+            novas_despesas.append(nova_despesa)
+        else:
+            return {"message": f"Ignorando item com valor inválido: {item}", "success": False}
 
     db.add_all(novas_despesas)
     db.commit()

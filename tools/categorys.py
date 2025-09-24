@@ -9,14 +9,16 @@ def listar_categorias(db: Session):
 
     print(json.dumps([{
         "category": d.category,
-        "subcategorys": d.subcategorys
+        "subcategorys": d.subcategorys,
+        "type": d.type
     } for d in categorys], ensure_ascii=False, indent=2))
 
     return [
         {
             "id": d.id,
             "category": d.category,
-            "subcategorys": d.subcategorys
+            "subcategorys": d.subcategorys,
+            "type": d.type
         }
         for d in categorys
     ]

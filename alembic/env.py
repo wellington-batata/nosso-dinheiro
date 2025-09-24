@@ -10,9 +10,17 @@ import os
 from dotenv import load_dotenv
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
 
+ENV = os.getenv("ENV")
+
+# Precisa do admin user
+os.environ["DATABASE_URL"] = os.getenv("DATABASE_URL_LOCAL")
+
+print("ENV:", os.getenv("ENV"))
+print("DATABASE_URL:", os.getenv("DATABASE_URL"))
+
 config = context.config
 config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL"))
-print("DATABASE_URL:", os.getenv("DATABASE_URL"))
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
