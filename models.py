@@ -5,8 +5,8 @@ from database import Base
 from sqlalchemy.dialects.postgresql import JSONB
 
 
-class Expenses(Base):
-    __tablename__ = "Expenses"
+class Transactions(Base):
+    __tablename__ = "Transactions"
 
     id = Column(Integer, primary_key=True, index=True)
     userId = Column(Integer, index=True)
@@ -14,6 +14,8 @@ class Expenses(Base):
     money = Column(Float)
     category = Column(String, index=True)
     subcategory = Column(String, index=True, nullable=True)
+    type = Column(String, index=True, nullable=True)  # credit ou debit
+    created_at = Column(DateTime, default=datetime.today())
     event_date = Column(DateTime, default=datetime.today())
 
 
@@ -25,7 +27,7 @@ class Categorys(Base):
     subcategorys = Column(JSONB, nullable=True)
 
 
-class ExpensesText(BaseModel):
+class TransactionText(BaseModel):
     texto: str
 
 

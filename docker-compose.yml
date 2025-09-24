@@ -6,9 +6,9 @@ services:
     container_name: agente-financeiro-db
     restart: always
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: senha
-      POSTGRES_DB: financeiro
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: 670404
+      POSTGRES_DB: nosso-dinheiro
     ports:
       - "5432:5432"
     volumes:

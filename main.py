@@ -8,12 +8,13 @@ from langchain.prompts import PromptTemplate
 from langchain_openai.llms import OpenAI
 from datetime import datetime
 from typing import List
-from models import Expenses, Message, ExpensesText
+from models import Transactions, Message, TransactionText
+from models import Transactions, Message, TransactionText
 from database import SessionLocal, engine, Base
 from sqlalchemy.orm import Session
 
 from tools.date_now import tratar_data
-from prompt_template import pt_date, pt_expenses
+from prompt_template import pt_date, pt_transaction
 from tools.categorys import listar_categorias, montar_prompt as montar_prompt_categorys
 
 # from openai import OpenAI
@@ -87,7 +88,7 @@ def analisar_despesa_texto(param_text: str):
 
     print("Data extraída:", the_date)
 
-    prompt_template = PromptTemplate.from_template(pt_expenses)
+    prompt_template = PromptTemplate.from_template(pt_transaction)
 
     prompt = prompt_template.format(param_record=param_text, date=the_date)
     print("Prompt enviado à IA:", prompt)
@@ -101,15 +102,15 @@ def analisar_despesa_texto(param_text: str):
         return None
 
 
-@app.post("/expenses", response_model=Message)
-def adicionar_despesa_texto(d: ExpensesText, userId: int, db: Session = Depends(get_db)):
+@app.post("/Transactions", response_model=Message)
+def adicionar_despesa_texto(d: TransactionText, userId: int, db: Session = Depends(get_db)):
     dados = analisar_despesa_texto(d.texto)
     if not dados or not isinstance(dados, list) or len(dados) == 0:
-        return {"mensagem": "Erro ao processar texto", "id": 0}
+        return {"message": "Erro ao processar texto", "id": -1}
 
     novas_despesas = []
     for item in dados:
-        nova_despesa = Expenses(
+        nova_despesa = Transactions(
             description=item["description"],
             money=float(item["value"]),
             category=item["category"],
@@ -127,9 +128,10 @@ def adicionar_despesa_texto(d: ExpensesText, userId: int, db: Session = Depends(
     return {"message": "Despesa adicionada com sucesso via IA", "success": True}
 
 
-@app.get("/expenses", response_model=List[dict])
+@app.get("/Transactions", response_model=List[dict])
 def listar_despesas(userId: int, db: Session = Depends(get_db)):
-    despesas = db.query(Expenses).where(Expenses.userId == userId).all()
+    despesas = db.query(Transactions).where(
+        Transactions.userId == userId).all()
     return [
         {
             "id": d.id,
