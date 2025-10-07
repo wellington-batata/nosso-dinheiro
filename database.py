@@ -7,7 +7,7 @@ load_dotenv()
 
 ENV = os.getenv("ENV")
 
-DATABASE_URL = os.getenv("DATABASE_URL_DOCKER")
+DATABASE_URL = os.getenv(f"DATABASE_URL_{ENV.upper()}")
 
 print("database ENV:", ENV)
 print("database DATABASE_URL:", DATABASE_URL)

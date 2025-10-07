@@ -13,7 +13,7 @@ load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
 ENV = os.getenv("ENV")
 
 # Precisa do admin user
-os.environ["DATABASE_URL"] = os.getenv("DATABASE_URL_LOCAL")
+os.environ["DATABASE_URL"] = os.getenv(f"DATABASE_URL_{ENV.upper()}")
 
 print("ENV:", os.getenv("ENV"))
 print("DATABASE_URL:", os.getenv("DATABASE_URL"))

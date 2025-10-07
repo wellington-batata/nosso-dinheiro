@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy import Boolean, Column, Integer, String, Float, DateTime
 from datetime import datetime
 from database import Base
 from sqlalchemy.dialects.postgresql import JSONB
@@ -17,6 +17,10 @@ class Transactions(Base):
     type = Column(String, index=True, nullable=True)  # credit ou debit
     created_at = Column(DateTime, default=datetime.today())
     event_date = Column(DateTime, default=datetime.today())
+    is_recurring = Column(Boolean, nullable=True)
+    recurrence_type = Column(String, nullable=True)
+    auto_generated = Column(Boolean, nullable=True)
+    parent_recurring_id = Column(Integer, nullable=True)
 
 
 class Categorys(Base):
